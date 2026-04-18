@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 24px;
+      background: #f0f2f5;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 280px;
+      font-size: 15px;
+      line-height: 1.6;
+      padding: 16px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background: #fff;
+      box-sizing: border-box;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus {
+      border-color: #25D366;
+      box-shadow: 0 0 0 2px rgba(37,211,102,0.2);
+    }
+    button {
+      margin-top: 12px;
+      padding: 10px 20px;
+      background: #25D366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover { background: #1ebe5d; }
+    #copied {
+      display: none;
+      margin-left: 10px;
+      font-size: 13px;
+      color: #25D366;
+    }
+  </style>
+</head>
+<body>
+  <label>✏️ Edita a mensagem abaixo antes de copiar:</label>
+  <textarea id="msg">Olá pessoal,
+
+Passo a dar nota de onde estou: tenho o plano detalhado feito, as decisões arquiteturais todas fechadas (Java + Quarkus + gRPC + ZooKeeper, sem Consul nem MOM — discutidos só no relatório), e as fases 1 e 2 concluídas.
+
+Vou continuar a avançar a partir deste plano. A minha abordagem é: eu tomo as decisões arquiteturais e uso IA para implementar o código — desta forma consigo fazer em 1-2 dias o que demoraria semanas a fazer manualmente. Não sei como estão a pensar abordar o trabalho, mas acho que faz sentido coordenarmos para não duplicarmos esforço.
+
+Hoje não consigo avançar mais, retomo amanhã de manhã.</textarea>
+  <br>
+  <button onclick="copy()">Copiar mensagem</button>
+  <span id="copied">✓ Copiado!</span>
+
+  <script>
+    function copy() {
+      const txt = document.getElementById('msg').value;
+      navigator.clipboard.writeText(txt).then(() => {
+        const el = document.getElementById('copied');
+        el.style.display = 'inline';
+        setTimeout(() => el.style.display = 'none', 2000);
+      });
+    }
+  </script>
+</body>
+</html>

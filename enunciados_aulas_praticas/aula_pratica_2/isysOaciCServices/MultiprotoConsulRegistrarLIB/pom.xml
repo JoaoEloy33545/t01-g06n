@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>isos.isysiesd</groupId>
+    <artifactId>ISysOaciCServices</artifactId>
+    <version>0.1.0</version>
+  </parent>
+
+  <groupId>isos.isysiesd.isysoacicservices</groupId>
+  <artifactId>MultiprotoConsulRegistrarLIB</artifactId>
+  <name>${module.type} MultiprotoConsulRegistrarLIB</name>
+
+  <properties>
+    <module.type>LIB ::</module.type>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
+    </dependency>
+  </dependencies>
+
+</project>

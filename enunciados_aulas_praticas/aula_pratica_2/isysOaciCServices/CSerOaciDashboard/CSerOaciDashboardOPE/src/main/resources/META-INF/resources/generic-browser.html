@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generic Service Browser</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --ink: #13212f;
+      --muted: #556476;
+      --line: #d8dee5;
+      --accent: #0a7a5a;
+      --accent-strong: #075f46;
+      --warn: #8a2735;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at top right, #d7efe6, var(--bg) 45%);
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 24px rgba(19, 33, 47, 0.06);
+    }
+    h1 { margin: 0 0 .8rem; font-size: 1.5rem; }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: .7rem;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: .9rem;
+      min-width: 0;
+    }
+    .header-left img {
+      height: 76px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      flex-shrink: 0;
+    }
+    .header-right img {
+      height: 52px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .header-title {
+      min-width: 0;
+    }
+    .header-title h1 {
+      margin-bottom: .2rem;
+    }
+    .subtitle {
+      margin: 0;
+      font-size: .85rem;
+      color: #d97706;
+      font-weight: 600;
+    }
+    h2 { margin: 0 0 .8rem; font-size: 1.1rem; }
+    label { font-size: .9rem; color: var(--muted); display: block; margin-bottom: .2rem; }
+    input, select, textarea, button {
+      width: 100%;
+      padding: .65rem .7rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font: inherit;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: .7rem;
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: var(--accent-strong); }
+    button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--line);
+    }
+    button.secondary:hover {
+      background: #eef7f4;
+    }
+    .service-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: .7rem;
+      margin-bottom: .6rem;
+    }
+    .instance {
+      font-size: .9rem;
+      color: var(--muted);
+      margin-top: .3rem;
+    }
+    .error { color: var(--warn); font-weight: 600; }
+    pre {
+      margin: 0;
+      padding: .8rem;
+      background: #f8fafb;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    .meta-box {
+      margin-top: .7rem;
+    }
+    .hint {
+      margin: .25rem 0 .45rem;
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    .services-window {
+      max-height: 270px; /* roughly 3 service cards */
+      overflow-y: auto;
+      padding-right: .25rem;
+    }
+    .panel-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: .75rem;
+      margin-bottom: .4rem;
+    }
+    .panel-header h2 {
+      margin: 0;
+    }
+    .panel-header .actions {
+      display: flex;
+      gap: .5rem;
+      flex-shrink: 0;
+    }
+    .panel-header button {
+      width: auto;
+      padding: .5rem .7rem;
+      border-radius: 10px;
+      font-size: .85rem;
+    }
+    .idl-window {
+      height: 320px;
+      overflow-y: auto;
+      padding-right: .25rem;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <div class="header-brand">
+      <div class="header-left">
+        <img src="images/isel.svg" alt="ISEL logo">
+        <div class="header-title">
+          <h1>Generic Service Browser</h1>
+          <p class="subtitle">DEI-MEIC-IESD, 2026</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <img src="images/politecid.png" alt="Politecnico logo">
+        <img src="images/ipl.jpg" alt="IPL logo">
+      </div>
+    </div>
+    <div class="grid">
+      <div>
+        <label for="path">Service path</label>
+        <input id="path" placeholder="Optional fallback, e.g. /hello">
+      </div>
+      <div style="align-self:end">
+        <button id="load">Load services</button>
+      </div>
+    </div>
+    <p id="loadError" class="error"></p>
+  </div>
+
+  <div class="panel">
+    <h2>Registered services</h2>
+    <div class="services-window">
+      <div id="services"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>The Interface Definition Language of the selected service</h2>
+      <div class="actions">
+        <button id="idlToggle" class="secondary" type="button">SHOW IDL</button>
+      </div>
+    </div>
+    <p id="idlSubtitle" class="hint">Select an instance to view its interface definition.</p>
+    <div class="idl-window">
+      <pre id="selectedIdl">No service selected.</pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Invoke selected instance</h2>
+    <div class="grid">
+      <div>
+        <label for="serviceName">Service name</label>
+        <input id="serviceName">
+      </div>
+      <div>
+        <label for="instanceId">Instance ID</label>
+        <input id="instanceId">
+      </div>
+      <div>
+        <label for="protocol">Protocol</label>
+        <input id="protocol" readonly>
+      </div>
+      <div>
+        <label for="operation">Operation</label>
+        <select id="operation"></select>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div>
+        <label for="invokePath">Service path</label>
+        <input id="invokePath" placeholder="Filled from selected instance when available">
+      </div>
+      <div>
+        <label for="endpoint">Selected endpoint</label>
+        <input id="endpoint" placeholder="Click an instance to fill this" readonly>
+      </div>
+      <div>
+        <label for="paramFields">Arguments</label>
+        <p id="argsHelp" class="hint">One field is shown for each argument.</p>
+        <div id="paramFields" class="grid"></div>
+      </div>
+    </div>
+    <div style="margin-top:.8rem">
+      <button id="invoke">Invoke</button>
+    </div>
+    <div class="meta-box">
+      <label for="selectedMetadata">Selected service metadata</label>
+      <pre id="selectedMetadata">Select an instance to view metadata.</pre>
+    </div>
+    <p id="invokeError" class="error"></p>
+    <pre id="output">{}</pre>
+  </div>
+</div>
+
+<script>
+  const pathEl = document.getElementById("path");
+  const servicesEl = document.getElementById("services");
+  const loadErrorEl = document.getElementById("loadError");
+  const invokeErrorEl = document.getElementById("invokeError");
+  const outputEl = document.getElementById("output");
+
+  const serviceNameEl = document.getElementById("serviceName");
+  const instanceIdEl = document.getElementById("instanceId");
+  const protocolEl = document.getElementById("protocol");
+  const invokePathEl = document.getElementById("invokePath");
+  const endpointEl = document.getElementById("endpoint");
+  const operationEl = document.getElementById("operation");
+  const paramFieldsEl = document.getElementById("paramFields");
+  const argsHelpEl = document.getElementById("argsHelp");
+  const selectedMetadataEl = document.getElementById("selectedMetadata");
+  const idlSubtitleEl = document.getElementById("idlSubtitle");
+  const selectedIdlEl = document.getElementById("selectedIdl");
+  const idlToggleEl = document.getElementById("idlToggle");
+  const idlWindowEl = document.querySelector(".idl-window");
+  let inputsByOperation = {};
+  let idlExpanded = false;
+
+  function setIdlExpanded(expanded) {
+    idlExpanded = Boolean(expanded);
+    idlToggleEl.textContent = idlExpanded ? "HIDE IDL" : "SHOW IDL";
+    if (idlWindowEl) {
+      idlWindowEl.style.display = idlExpanded ? "block" : "none";
+    }
+  }
+
+  function renderSelectedIdl(language, content) {
+    if (!language) {
+      idlSubtitleEl.textContent = "Select an instance to view its interface definition.";
+      selectedIdlEl.textContent = "No service selected.";
+	      return;
+	    }
+    idlSubtitleEl.textContent = language;
+    selectedIdlEl.textContent = (content === null || content === undefined) ? "" : content;
+  }
+
+  async function loadInterfaceDefinition() {
+    const endpoint = endpointEl.value;
+    if (!endpoint) {
+      renderSelectedIdl(null, null);
+      return;
+    }
+
+    idlSubtitleEl.textContent = "Loading…";
+    selectedIdlEl.textContent = "Loading interface definition…";
+
+    try {
+      const query = new URLSearchParams({
+        serviceName: serviceNameEl.value || "",
+        instanceId: instanceIdEl.value || "",
+        path: invokePathEl.value || "",
+        endpoint,
+        protocol: protocolEl.value || ""
+      });
+      const res = await fetch(`/soap-browser/idl?${query.toString()}`);
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      const payload = await res.json();
+      renderSelectedIdl(payload.language || "(unknown)", payload.content || "");
+    } catch (e) {
+      idlSubtitleEl.textContent = "Interface definition unavailable";
+      selectedIdlEl.textContent = "Error: " + e.message;
+    }
+  }
+
+  function renderSelectedMetadata(service, instance) {
+    if (!service || !instance) {
+      selectedMetadataEl.textContent = "Select an instance to view metadata.";
+      return;
+    }
+    const metadata = instance.metadata || {};
+    const payload = {
+      serviceName: service.serviceName,
+      instanceId: instance.id,
+      protocol: instance.protocol || "",
+      address: instance.address,
+      port: instance.port,
+      servicePath: instance.servicePath || "",
+      endpoint: instance.endpoint,
+      metadata
+    };
+    selectedMetadataEl.textContent = JSON.stringify(payload, null, 2);
+  }
+
+  async function loadServices() {
+    loadErrorEl.textContent = "";
+    invokeErrorEl.textContent = "";
+    servicesEl.innerHTML = "";
+    serviceNameEl.value = "";
+    instanceIdEl.value = "";
+    protocolEl.value = "";
+    invokePathEl.value = "";
+    endpointEl.value = "";
+    operationEl.innerHTML = "";
+    paramFieldsEl.innerHTML = "";
+    renderSelectedMetadata(null, null);
+    renderSelectedIdl(null, null);
+    inputsByOperation = {};
+    const path = encodeURIComponent(pathEl.value || "");
+    try {
+      const res = await fetch(`/soap-browser/services?path=${path}`);
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      const data = await res.json();
+      if (!data.length) {
+        servicesEl.innerHTML = "<p>No services found.</p>";
+        return;
+      }
+
+      data.forEach(service => {
+        const card = document.createElement("div");
+        card.className = "service-card";
+        card.innerHTML = `<strong>${service.serviceName}</strong>`;
+
+        service.instances.forEach(instance => {
+          const div = document.createElement("div");
+          div.className = "instance";
+          const registeredPath = instance.servicePath || "(none)";
+          div.textContent = `${instance.id} -> ${instance.endpoint} [registeredPath=${registeredPath}]`;
+          div.style.cursor = "pointer";
+          div.addEventListener("click", () => {
+            serviceNameEl.value = service.serviceName;
+            instanceIdEl.value = instance.id;
+            protocolEl.value = (instance.protocol || "").toLowerCase();
+            invokePathEl.value = instance.servicePath || pathEl.value;
+            endpointEl.value = instance.endpoint;
+            renderSelectedMetadata(service, instance);
+            invokeErrorEl.textContent = "";
+            loadInterfaceDefinition();
+            loadOperations();
+          });
+          card.appendChild(div);
+        });
+        servicesEl.appendChild(card);
+      });
+    } catch (e) {
+      loadErrorEl.textContent = e.message;
+    }
+  }
+
+  async function loadOperations() {
+    operationEl.innerHTML = "";
+    const endpoint = endpointEl.value;
+    if (!endpoint) {
+      return;
+    }
+
+    try {
+      const query = new URLSearchParams({
+        serviceName: serviceNameEl.value || "",
+        instanceId: instanceIdEl.value || "",
+        path: invokePathEl.value || "",
+        endpoint,
+        protocol: protocolEl.value || ""
+      });
+      const res = await fetch(`/soap-browser/operations?${query.toString()}`);
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      const payload = await res.json();
+      protocolEl.value = payload.protocol || protocolEl.value;
+      const ops = payload.operations || [];
+      inputsByOperation = payload.inputsByOperation || {};
+      if (!ops.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "(no operations found)";
+        operationEl.appendChild(option);
+        return;
+      }
+      ops.forEach(op => {
+        const option = document.createElement("option");
+        option.value = op;
+        option.textContent = op;
+        operationEl.appendChild(option);
+      });
+      renderOperationFields();
+    } catch (e) {
+      invokeErrorEl.textContent = e.message;
+    }
+  }
+
+  function renderOperationFields() {
+    paramFieldsEl.innerHTML = "";
+    const protocol = (protocolEl.value || "").toLowerCase();
+    const operation = operationEl.value;
+    const inputNames = inputsByOperation[operation] || [];
+    const restMethod = String(operation || "").trim().split(/\s+/, 1)[0].toUpperCase();
+
+    if (protocol === "rest") {
+      if (["GET", "DELETE"].includes(restMethod)) {
+        argsHelpEl.textContent = "REST " + restMethod + ": query parameters via fields or JSON array fallback.";
+      } else {
+        argsHelpEl.textContent = "REST " + restMethod + ": body fields via generated inputs or JSON array fallback.";
+      }
+    } else if (protocol === "grpc") {
+      argsHelpEl.textContent = "gRPC/RPC: provide request fields by name (preferred) or by argument order.";
+    } else if (protocol === "thrift") {
+      argsHelpEl.textContent = "Thrift: provide arguments in the operation input order.";
+    } else {
+      argsHelpEl.textContent = "SOAP: provide arguments in the operation input order.";
+    }
+
+    if (!inputNames.length) return;
+
+    inputNames.forEach((name, index) => {
+      const wrap = document.createElement("div");
+      const label = document.createElement("label");
+      label.htmlFor = `param-${index}`;
+      label.textContent = name;
+      const input = document.createElement("input");
+      input.id = `param-${index}`;
+      input.dataset.paramIndex = String(index);
+      input.placeholder = `Value for ${name}`;
+      wrap.appendChild(label);
+      wrap.appendChild(input);
+      paramFieldsEl.appendChild(wrap);
+    });
+  }
+
+  function parseTypedValue(raw) {
+    if (raw === null || raw === undefined) return "";
+    const value = String(raw).trim();
+    if (value === "") return "";
+    if (/^-?\d+$/.test(value)) return Number.parseInt(value, 10);
+    if (/^-?\d+\.\d+$/.test(value)) return Number.parseFloat(value);
+    if (value.toLowerCase() === "true") return true;
+    if (value.toLowerCase() === "false") return false;
+    return value;
+  }
+
+  function normalizeServerError(raw) {
+    if (!raw) return "Unknown server error";
+    const text = String(raw).trim();
+    if (!text) return "Unknown server error";
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === "object") {
+        return parsed.details || parsed.message || parsed.error || text;
+      }
+    } catch (_) {
+      // Keep plain-text path below.
+    }
+    const compact = text
+      .split("\n")
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith("at "))
+      .slice(0, 4)
+      .join(" | ");
+    return compact || text;
+  }
+
+  function collectParameters() {
+    const operation = operationEl.value;
+    const inputNames = inputsByOperation[operation] || [];
+    const protocol = (protocolEl.value || "").toLowerCase();
+
+    if (!inputNames.length) {
+      return [];
+    }
+
+    const formValues = inputNames.map((_, index) => {
+      const input = document.getElementById(`param-${index}`);
+      return input ? parseTypedValue(input.value) : "";
+    });
+    const hasFormValue = formValues.some(v => String(v).trim() !== "");
+    const missingNames = inputNames.filter((_, index) => String(formValues[index]).trim() === "");
+
+    if (hasFormValue && missingNames.length > 0) {
+      throw new Error("Missing value for parameter(s): " + missingNames.join(", "));
+    }
+
+    if (!hasFormValue) {
+      return [];
+    }
+
+    if (protocol === "rest") {
+      const named = {};
+      inputNames.forEach((name, index) => {
+        named[name] = formValues[index];
+      });
+      return [named];
+    }
+
+    return formValues;
+  }
+
+  async function invokeSelected() {
+    invokeErrorEl.textContent = "";
+    outputEl.textContent = "Invoking...";
+    const invokeBtn = document.getElementById("invoke");
+    invokeBtn.disabled = true;
+
+    try {
+      var parameters = collectParameters();
+    } catch (e) {
+      invokeErrorEl.textContent = "Invalid parameters: " + e.message;
+      outputEl.textContent = JSON.stringify({
+        error: "Invalid parameters",
+        details: e.message
+      }, null, 2);
+      invokeBtn.disabled = false;
+      return;
+    }
+
+    const payload = {
+      serviceName: serviceNameEl.value,
+      instanceId: instanceIdEl.value,
+      protocol: protocolEl.value,
+      endpoint: endpointEl.value,
+      servicePath: invokePathEl.value,
+      operation: operationEl.value,
+      parameters
+    };
+
+    try {
+      const res = await fetch("/soap-browser/invoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(normalizeServerError(text));
+      }
+      if (!text || !text.trim()) {
+        outputEl.textContent = JSON.stringify({ warning: "Empty response body from server" }, null, 2);
+        return;
+      }
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed === "object" && Object.prototype.hasOwnProperty.call(parsed, "result")) {
+          outputEl.textContent = JSON.stringify({
+            protocol: parsed.protocol,
+            operation: parsed.operation,
+            endpoint: parsed.endpoint,
+            result: parsed.result
+          }, null, 2);
+        } else {
+          outputEl.textContent = JSON.stringify(parsed, null, 2);
+        }
+      } catch (parseErr) {
+        outputEl.textContent = JSON.stringify({ rawResponse: text }, null, 2);
+      }
+    } catch (e) {
+      invokeErrorEl.textContent = e.message;
+      outputEl.textContent = JSON.stringify({
+        error: "Invocation failed",
+        details: e.message
+      }, null, 2);
+    } finally {
+      invokeBtn.disabled = false;
+    }
+  }
+
+  document.getElementById("load").addEventListener("click", loadServices);
+  document.getElementById("invoke").addEventListener("click", invokeSelected);
+  invokePathEl.addEventListener("change", loadOperations);
+  operationEl.addEventListener("change", renderOperationFields);
+  idlToggleEl.addEventListener("click", () => {
+    setIdlExpanded(!idlExpanded);
+    if (idlExpanded && endpointEl.value && selectedIdlEl.textContent === "No service selected.") {
+      loadInterfaceDefinition();
+    }
+  });
+  setIdlExpanded(false);
+  loadServices();
+</script>
+</body>
+</html>

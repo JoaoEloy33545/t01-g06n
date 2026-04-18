@@ -1,0 +1,7 @@
+/* Hide Vaadin Copilot activation UI */
+copilot-activation-button,
+copilot-main,
+copilot-drawer-panel,
+copilot-notifications-container {
+  display: none !important;
+}

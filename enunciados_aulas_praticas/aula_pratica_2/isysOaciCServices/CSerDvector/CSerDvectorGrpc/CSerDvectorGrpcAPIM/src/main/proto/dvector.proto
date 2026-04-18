@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package isos.isysiesd.dvapi;
+option java_package = "isos.isysiesd.dvapi";
+option java_multiple_files = true;
+
+service Dvector {
+  rpc Read(ReadRequest) returns (ReadReply);
+  rpc Write(WriteRequest) returns (WriteReply);
+  rpc InvariantCheck(InvariantCheckRequest) returns (InvariantCheckReply);
+  rpc SumVector(SumVectorRequest) returns (SumVectorReply);
+}
+
+message ReadRequest {
+  int32 pos = 1;
+}
+
+message ReadReply {
+  int32 value = 1;
+}
+
+message WriteRequest {
+  int32 pos = 1;
+  int32 value = 2;
+}
+
+message WriteReply {
+  bool success = 1;
+}
+
+message InvariantCheckRequest {}
+
+message InvariantCheckReply {
+  string result = 1;
+}
+
+message SumVectorRequest {}
+
+message SumVectorReply {
+  int32 sum = 1;
+}

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>isos.isysiesd</groupId>
+    <artifactId>DvectorCli</artifactId>
+    <version>0.1.0</version>
+  </parent>
+
+  <groupId>isos.isysiesd.isysdvector</groupId>
+  <artifactId>CSerDvectorCliAPIM</artifactId>
+  <name>${module.type} CSerDvectorCliAPIM</name>
+
+  <properties>
+    <module.type>API ::</module.type>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.quarkiverse.cxf</groupId>
+      <artifactId>quarkus-cxf</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-vertx-http</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-codegen-plugin</artifactId>
+        <version>4.2.0</version>
+        <executions>
+          <execution>
+            <id>generate-sources</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <sourceRoot>${project.build.directory}/generated-sources/cxf</sourceRoot>
+              <wsdlOptions>
+                <wsdlOption>
+                  <wsdl>http://localhost:8080/dvector?wsdl</wsdl>
+                </wsdlOption>
+              </wsdlOptions>
+            </configuration>
+            <goals>
+              <goal>wsdl2java</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!--
+                  <plugin>
+                      <groupId>io.quarkus</groupId>
+                      <artifactId>quarkus-maven-plugin</artifactId>
+                      <version>${quarkus-maven-plugin}</version>
+                      <executions>
+                          <execution>
+                              <goals>
+                                  <goal>build</goal>
+                                  <goal>generate-code</goal>
+                              </goals>
+                          </execution>
+                      </executions>
+                  </plugin>
+      -->
+      <!-- 
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>jaxws-maven-plugin</artifactId>
+        <version>${jaxws-maven-plugin}</version>
+        <executions>
+          <execution>
+            <id>wsimport VectorService</id>
+            <goals>
+              <goal>wsimport</goal>
+            </goals>
+            <configuration>
+              <wsdlUrls>
+                <wsdlUrl>http://localhost:59859/vector?wsdl</wsdlUrl>
+              </wsdlUrls>
+              <bindingDirectory>${basedir}/src/main/resources/jaxws</bindingDirectory>
+              <packageName>isos.isysiesd.dvector.api</packageName>
+              <sourceDestDir>${basedir}/src/main/java</sourceDestDir>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>jaxws-tools</artifactId>
+            <version>${jaxws-tools}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+-->
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+</project>

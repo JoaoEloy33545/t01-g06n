@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>isos.isysiesd</groupId>
+  <artifactId>ISysOaciCServices</artifactId>
+  <version>0.1.0</version>
+
+  <packaging>pom</packaging>
+  <name>${module.type} ISysOaciCServices</name>
+
+  <properties>
+    <module.type>ISYSTEM ::</module.type>
+
+    <compiler-plugin.version>3.14.1</compiler-plugin.version>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+    <quarkus.platform.version>3.32.1</quarkus.platform.version>
+    <skipITs>true</skipITs>
+    <surefire-plugin.version>3.5.4</surefire-plugin.version>
+    <jaxws-maven-plugin>2.6</jaxws-maven-plugin>
+    <jaxws-tools>4.0.3</jaxws-tools>
+    
+    <stork-service-discovery-consul>2.7.7</stork-service-discovery-consul>
+    <smallrye-mutiny-vertx-consul-client>3.21.5</smallrye-mutiny-vertx-consul-client>
+    <cxf.version>4.0.5</cxf.version>
+    <thrift.version>0.21.0</thrift.version>
+  </properties>
+
+  <modules>
+    <module>MultiprotoConsulRegistrarLIB</module>
+    <module>CSerOaciDashboard</module>
+    <module>CSerCalculator</module>
+    <module>CSerDvector</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>quarkus-cxf-bom</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-junit</artifactId>
+        <version>${quarkus.platform.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.smallrye.stork</groupId>
+        <artifactId>stork-service-discovery-consul</artifactId>
+        <version>${stork-service-discovery-consul}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.smallrye.reactive</groupId>
+        <artifactId>smallrye-mutiny-vertx-consul-client</artifactId>
+        <version>${smallrye-mutiny-vertx-consul-client}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.thrift</groupId>
+        <artifactId>libthrift</artifactId>
+        <version>${thrift.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>${quarkus.platform.group-id}</groupId>
+          <artifactId>quarkus-maven-plugin</artifactId>
+          <version>${quarkus.platform.version}</version>
+          <extensions>true</extensions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${compiler-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${surefire-plugin.version}</version>
+          <configuration>
+            <systemPropertyVariables>
+              <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+              <maven.home>${maven.home}</maven.home>
+            </systemPropertyVariables>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${surefire-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+</project>

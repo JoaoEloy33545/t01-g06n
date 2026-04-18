@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>isos.isysiesd.isysoacicservices</groupId>
+    <artifactId>CSerOaciDashboard</artifactId>
+    <version>0.1.0</version>
+  </parent>
+
+  <groupId>isos.isysiesd.isysoacidashboard</groupId>
+  <artifactId>CSerOaciDashboardOPE</artifactId>
+  <packaging>quarkus</packaging>
+  <name>${module.type} CSerOaciDashboardOPE</name>
+ 
+  <properties>
+    <module.type>OPE ::</module.type>
+    <quarkus.dev.debug>false</quarkus.dev.debug>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>isos.isysiesd.isysoacidashboard</groupId>
+      <artifactId>CSerDvectorGrpcAPIM</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>isos.isysiesd.isysoacidashboard</groupId>
+      <artifactId>CSerCalculatorGrpcAPIM</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>isos.isysiesd.isysoacidashboard</groupId>
+      <artifactId>CSerDvectorThriftAPIM</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-client-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.cxf</groupId>
+      <artifactId>quarkus-cxf</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <!-- Quarkus runtime (JAX-RS only if you expose /test) -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-services</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <version>0.21.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <debug>${quarkus.dev.debug}</debug>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <parameters>true</parameters>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>native</id>
+      <activation>
+        <property>
+          <name>native</name>
+        </property>
+      </activation>
+      <properties>
+        <quarkus.package.jar.enabled>false</quarkus.package.jar.enabled>
+        <skipITs>false</skipITs>
+        <quarkus.native.enabled>true</quarkus.native.enabled>
+      </properties>
+    </profile>
+  </profiles>
+</project>

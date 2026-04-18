@@ -1,0 +1,150 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zoo1
+  labels:
+    app: zookeeper
+    zk-node: "1"
+spec:
+  hostname: zoo1
+  containers:
+    - name: zoo1
+      image: zookeeper:3.9.5
+      env:
+        - name: ZOO_MY_ID
+          value: "1"
+        - name: ZOO_SERVERS
+          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181 server.4=zoo4:2888:3888;2181 server.5=zoo5:2888:3888;2181 server.6=zoo6:2888:3888;2181"
+        - name: ZOO_4LW_COMMANDS_WHITELIST
+          value: "ruok,stat,conf,mntr"
+      ports:
+        - containerPort: 2181
+          hostPort: 2181
+        - containerPort: 2888
+        - containerPort: 3888
+  restartPolicy: Always
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zoo2
+  labels:
+    app: zookeeper
+    zk-node: "2"
+spec:
+  hostname: zoo2
+  containers:
+    - name: zoo2
+      image: zookeeper:3.9.5
+      env:
+        - name: ZOO_MY_ID
+          value: "2"
+        - name: ZOO_SERVERS
+          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181 server.4=zoo4:2888:3888;2181 server.5=zoo5:2888:3888;2181 server.6=zoo6:2888:3888;2181"
+        - name: ZOO_4LW_COMMANDS_WHITELIST
+          value: "ruok,stat,conf,mntr"
+      ports:
+        - containerPort: 2181
+        - containerPort: 2888
+        - containerPort: 3888
+  restartPolicy: Always
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zoo3
+  labels:
+    app: zookeeper
+    zk-node: "3"
+spec:
+  hostname: zoo3
+  containers:
+    - name: zoo3
+      image: zookeeper:3.9.5
+      env:
+        - name: ZOO_MY_ID
+          value: "3"
+        - name: ZOO_SERVERS
+          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181 server.4=zoo4:2888:3888;2181 server.5=zoo5:2888:3888;2181 server.6=zoo6:2888:3888;2181"
+        - name: ZOO_4LW_COMMANDS_WHITELIST
+          value: "ruok,stat,conf,mntr"
+      ports:
+        - containerPort: 2181
+        - containerPort: 2888
+        - containerPort: 3888
+  restartPolicy: Always
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zoo4
+  labels:
+    app: zookeeper
+    zk-node: "4"
+spec:
+  hostname: zoo4
+  containers:
+    - name: zoo4
+      image: zookeeper:3.9.5
+      env:
+        - name: ZOO_MY_ID
+          value: "4"
+        - name: ZOO_SERVERS
+          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181 server.4=zoo4:2888:3888;2181 server.5=zoo5:2888:3888;2181 server.6=zoo6:2888:3888;2181"
+        - name: ZOO_4LW_COMMANDS_WHITELIST
+          value: "ruok,stat,conf,mntr"
+      ports:
+        - containerPort: 2181
+        - containerPort: 2888
+        - containerPort: 3888
+  restartPolicy: Always
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zoo5
+  labels:
+    app: zookeeper
+    zk-node: "5"
+spec:
+  hostname: zoo5
+  containers:
+    - name: zoo5
+      image: zookeeper:3.9.5
+      env:
+        - name: ZOO_MY_ID
+          value: "5"
+        - name: ZOO_SERVERS
+          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181 server.4=zoo4:2888:3888;2181 server.5=zoo5:2888:3888;2181 server.6=zoo6:2888:3888;2181"
+        - name: ZOO_4LW_COMMANDS_WHITELIST
+          value: "ruok,stat,conf,mntr"
+      ports:
+        - containerPort: 2181
+        - containerPort: 2888
+        - containerPort: 3888
+  restartPolicy: Always
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zoo6
+  labels:
+    app: zookeeper
+    zk-node: "6"
+spec:
+  hostname: zoo6
+  containers:
+    - name: zoo6
+      image: zookeeper:3.9.5
+      env:
+        - name: ZOO_MY_ID
+          value: "6"
+        - name: ZOO_SERVERS
+          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181 server.4=zoo4:2888:3888;2181 server.5=zoo5:2888:3888;2181 server.6=zoo6:2888:3888;2181"
+        - name: ZOO_4LW_COMMANDS_WHITELIST
+          value: "ruok,stat,conf,mntr"
+      ports:
+        - containerPort: 2181
+        - containerPort: 2888
+        - containerPort: 3888
+  restartPolicy: Always

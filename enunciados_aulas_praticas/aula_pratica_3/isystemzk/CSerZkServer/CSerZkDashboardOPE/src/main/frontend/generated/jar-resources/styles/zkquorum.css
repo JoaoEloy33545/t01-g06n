@@ -1,0 +1,164 @@
+.status-grid {
+  /* Header + 6 data rows */
+  height: calc(var(--lumo-size-l) + (var(--lumo-size-m) * 6));
+}
+
+.cluster-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-width: 260px;
+  height: var(--lumo-size-m);
+  padding: 0 0.9rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cluster-badge-good {
+  background: #d1f7d6;
+  color: #0a6b2b;
+}
+
+.cluster-badge-bad {
+  background: #ffe0e0;
+  color: #a10000;
+}
+
+.cluster-badge-warn {
+  background: #ffe8cc;
+  color: #8a4b00;
+}
+
+.ensemble-status-field {
+  --lumo-contrast-10pct: transparent;
+  --lumo-contrast-20pct: transparent;
+  --lumo-primary-text-color: inherit;
+}
+
+.label-size-match {
+  font-size: 1.1rem;
+}
+
+.label-size-match::part(label) {
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.ensemble-label {
+  color: var(--lumo-secondary-text-color);
+  margin-bottom: 0.15rem;
+}
+
+.ensemble-status-field.cluster-badge-good::part(input-field) {
+  background: #d1f7d6;
+  color: #0a6b2b;
+  text-align: center;
+}
+
+.ensemble-status-field.cluster-badge-warn::part(input-field) {
+  background: #ffe8cc;
+  color: #8a4b00;
+  text-align: center;
+}
+
+.ensemble-status-field.cluster-badge-bad::part(input-field) {
+  background: #ffe0e0;
+  color: #a10000;
+  text-align: center;
+}
+
+.logs-header {
+  margin-bottom: 0;
+}
+
+.logs-area {
+  margin-top: 0;
+}
+
+.logs-area::part(label) {
+  font-size: 1.1rem;
+}
+
+.logs-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.logs-wrap .logs-area {
+  width: 100%;
+}
+
+.logs-area::part(input-field) {
+  padding-right: 7.5rem;
+}
+
+.logs-clear {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.25rem;
+}
+
+.quorum-warning {
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  background: #ffe0e0;
+  color: #a10000;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.node-count-button {
+  min-width: 2rem;
+  padding: 0;
+}
+
+.zk-tree-grid {
+  border: none;
+  box-shadow: none;
+  margin-bottom: 0.2rem;
+}
+
+.zk-tree-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.zk-tree-wrap .zk-tree-grid {
+  min-width: 1350px;
+}
+
+.zk-tree-grid::part(cell),
+.zk-tree-grid::part(header-cell) {
+  white-space: normal;
+  text-overflow: clip;
+}
+
+
+.zk-path-field::part(input-field),
+.zk-data-field::part(input-field) {
+  box-shadow: none;
+}
+
+.zk-path-field::part(input-field) {
+  border-top: none;
+}
+
+.zk-data-field::part(input-field) {
+  border-top: none;
+}
+
+.zk-data-field {
+  margin-top: 0;
+}
+
+.zk-path-field {
+  margin-top: 0;
+}
+
+.zk-editor {
+  margin-top: 0;
+}
