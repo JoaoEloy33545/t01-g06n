@@ -55,10 +55,86 @@ Ao executar a verificação dentro de uma transação com read locks em todos os
 
 ---
 
+### OBS-08 — Implementação feita pelo David num repositório separado
+
+A implementação do código está a ser desenvolvida pelo David Marcelino num repositório separado:
+`https://github.com/DavidmMar/IESD-2526SV` (pasta `tp1/`).
+
+Serviços já implementados: `CSerDvector`, `TransactionManager`, `TwoPhaseLockManager`, `CSerDvectorCli`.
+Em falta: integração do ZooKeeper no TPLM, `Service.Validator`, `podman-compose.yml` unificado, benchmarks.
+Desvio ao plano: locks por vetor inteiro em vez de por `(vecId, index)`.
+
+**Se a implementação do David não satisfizer todos os requisitos do enunciado**, será feita uma nova iteração sobre essa implementação com o Claude Code. Para já, o foco é o relatório.
+
+---
+
+### OBS-07 — Estratégia para o relatório: seguir as diretivas do professor à letra
+
+O professor Luís Osório avalia o relatório **"na base da discussão e da qualidade do relatório"**. A experiência mostra que este professor valoriza fortemente o trabalho que vai de encontro àquilo que ele instrui — a opinião dos alunos, mesmo que válida, tem pouco peso. O objetivo pragmático é passar à UC.
+
+**Regra de trabalho:** ao produzir conteúdo para o relatório, o critério principal é cobrir cada tópico que o professor listou explicitamente no enunciado — sem omissões, sem reordenações. A estrutura de capítulos e a lista de tópicos do enunciado são a lei. A discussão deve ser orientada para o que o professor quer ouvir, não para aquilo que seria a melhor análise técnica independente.
+
+Tópicos obrigatórios conforme o enunciado (pág. 2):
+- Discussão do problema: coordenação centralizada/distribuída, modelo X/Open, coordenação da concorrência
+- Dificuldade de sistemas com múltiplos elementos Serviço (modelos de programação IESD e Comp. Distribuída)
+- Aplicabilidade do MOM na coordenação entre serviços
+- Possibilidade de serviços em diferentes tecnologias (heterogeneidade)
+- Escalabilidade (número elevado de clientes e vetores)
+- Confrontação ACID com LLT/Saga
+- Consul (service registry, transparência à localização)
+- Validação de desempenho (transações por unidade de tempo, tempos de resposta)
+- Tolerância a falhas / resiliência / qualidade
+- Gestão do ciclo de vida dos elementos de infraestrutura
+- Hipótese de quadro tecnológico diferenciado (Java, .NET, Python, etc.)
+
+---
+
 ## ✅ To-Do's
 
+### 🔴 EM CURSO — Relatório (Cap. 2 primeiro)
+
+O fluxo decidido: avançar com o **Capítulo 2 antes de qualquer outro** — é o único capítulo que não depende da implementação do David nem de código a analisar. Tudo o que precisa é de fundamentação teórica e das decisões arquiteturais já tomadas.
+
+**Sequência de trabalho para o relatório:**
+
+1. **Cap. 2 — Fundamentação** ← a fazer agora, com o Claude no Cowork
+   - [ ] 2.1 Coordenação de Transações Distribuídas — Modelo X/Open (2PC, 2PL, TX/XA)
+   - [ ] 2.2 Dificuldade com múltiplos elementos Serviço
+   - [ ] 2.3 Aplicabilidade do MOM
+   - [ ] 2.4 Heterogeneidade tecnológica
+   - [ ] 2.5 Escalabilidade
+   - [ ] 2.6 ACID vs. LLT/Saga
+   - [ ] 2.7 Consul / Service Registry
+
+2. **Cap. 1 — Introdução** ← escrever após Cap. 2 (a intro resume o que foi escrito)
+   - [ ] Síntese do documento
+   - [ ] Estrutura do documento
+
+3. **Cap. 3 — Arquitetura e Demonstrador** ← depende de analisar o código do David
+   - [ ] Analisar implementação do David (ficheiros Java + protos)
+   - [ ] 3.1 Visão geral + diagrama de arquitetura
+   - [ ] 3.2 Estratégia e implementação (descrever cada serviço com excertos de código)
+   - [ ] 3.3 Tolerância a falhas (ZooKeeper)
+   - [ ] 3.4 Validação de desempenho
+   - [ ] 3.5 Ciclo de vida / podman-compose
+   - [ ] 3.6 Heterogeneidade tecnológica (quadro diferenciado)
+   - [ ] 3.7 Escalabilidade
+
+4. **Cap. 4 — Conclusões** ← escrever no fim, após Cap. 2 e 3 completos
+   - [ ] Síntese
+   - [ ] Dificuldades
+   - [ ] Melhorias e trabalho futuro
+   - [ ] Referências
+
+5. **Revisão final e entrega**
+   - [ ] Verificar cobertura de todos os tópicos do enunciado (OBS-07)
+   - [ ] Compilar PDF no Overleaf
+   - [ ] Empacotar `iesd2526-g06.zip` (código do David + relatório PDF)
+   - [ ] Submeter no Moodle até 19 de abril de 2026
+
+---
+
 ### Transversais
-- [ ] Começar a escrever o relatório **em paralelo** com a implementação — as secções teóricas (Cap. 2: fundamentos, X/Open DTP, 2PC, 2PL, ZooKeeper, MOM, Consul) podem ser redigidas antes do código estar terminado. Não deixar o relatório para o fim.
 - [ ] Criar `CLAUDE.md` na raiz do projeto com contexto global (stack, decisões, estrutura) para que o Claude Code não precise de ser recontextualizado em cada sessão.
 
 ### Fase 3 — Service.Vector

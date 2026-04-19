@@ -1,0 +1,18 @@
+% -------------------------------------------------------
+% Secção 1 – Introdução
+% -------------------------------------------------------
+
+\textit{(Síntese do trabalho: contexto, objetivo e estrutura do documento.)}
+
+O presente trabalho enquadra-se na unidade curricular de Integração de Elementos de Serviço
+Distribuídos e tem como objetivo o desenvolvimento de um sistema distribuído que coordena
+o acesso concorrente a um conjunto de vetores partilhados, garantindo as propriedades
+transacionais ACID num contexto multi-serviço.
+
+O sistema implementa o modelo \textit{X/Open Distributed Transaction Processing} (DTP),
+recorrendo ao protocolo \textit{Two-Phase Commit} (2PC) para coordenação de transações
+e ao protocolo \textit{Two-Phase Locking} (2PL) para controlo de concorrência.
+A tolerância a falhas do gestor de locks é assegurada pelo Apache ZooKeeper,
+através de eleição de líder.
+
+\textit{(Completar com a estrutura do documento: o que aborda cada capítulo.)}

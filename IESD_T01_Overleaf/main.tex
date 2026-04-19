@@ -1,0 +1,141 @@
+% =======================
+% File: main.tex — IESD Trabalho 01: Coordenação de Acesso Concorrente a Elementos de Serviço Distribuídos
+% =======================
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage[margin=2cm]{geometry}
+
+% Figures
+\usepackage{graphicx}
+\graphicspath{{figures/}{figs/}}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{placeins}
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{8pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
+
+% Tables
+\usepackage{booktabs}
+\usepackage{tabularx}
+
+% Lists
+\usepackage{enumitem}
+\setlist[enumerate,1]{label=\alph*)}
+
+% Code blocks
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  tabsize=2,
+  showstringspaces=false
+}
+\lstdefinelanguage{proto}{
+  morekeywords={syntax,package,service,rpc,returns,message,string,int32,int64,bool,repeated,oneof},
+  sensitive=false,
+  morecomment=[l]{//},
+  morestring=[b]"
+}
+
+% Diagrams
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+
+% URLs
+\usepackage{url}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+
+% Header/footer
+\usepackage{fancyhdr}
+\setlength{\headheight}{46pt}
+\addtolength{\topmargin}{-14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\raisebox{-0.5\height}{\includegraphics[height=1.5cm]{isel_logo}}}
+\fancyhead[R]{%
+  \raisebox{-0.5\height}{%
+    \begin{minipage}{0.7\textwidth}
+      \raggedleft\small
+      IESD (Integração de Elementos de Serviço Distribuídos)\\
+      Trabalho Prático 01\\
+      Grupo: G06
+    \end{minipage}
+  }%
+}
+\setlength{\footskip}{10pt}
+\fancyfoot[C]{\raisebox{1cm}{\thepage}}
+
+% Helper: numbered section title that appears in ToC
+\newcommand{\mopsection}[2]{%
+  \section*{#1. #2}%
+  \addcontentsline{toc}{section}{#1. #2}%
+}
+
+\begin{document}
+
+% ---------- Cover ----------
+\begin{titlepage}
+\thispagestyle{fancy}
+
+\vspace*{2.0cm}
+\begin{center}
+{\LARGE Instituto Superior de Engenharia de Lisboa\par}
+\vspace{0.3cm}
+{\large Departamento de Engenharia Informática\par}
+{\large Mestrado em Engenharia Informática e de Computadores\par}
+\vspace{1.2cm}
+{\LARGE Integração de Elementos de Serviço Distribuídos\par}
+\vspace{0.4cm}
+{\large Trabalho Prático 01\par}
+\vspace{0.3cm}
+{\large Coordenação de Acesso Concorrente a Elementos de Serviço Distribuídos\par}
+\end{center}
+
+\vfill
+\begin{flushleft}
+Aluno: \textbf{João Eloy} \quad Nº: 33545 \quad Turma: MEIC1N \\[0.3cm]
+Aluno: \textbf{David Marcelino} \quad Nº: 46062 \\[0.6cm]
+Docente: \textbf{Mário Rodrigues} \\
+\end{flushleft}
+
+\vspace{1.5cm}
+\begin{center}
+{\large 19 de Abril de 2026\par}
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% =========================
+% Sections
+% =========================
+
+\mopsection{1}{Introdução}
+\input{sections/s01_introducao}
+
+\clearpage
+\mopsection{2}{Conhecimentos na Fundamentação}
+\input{sections/s02_fundamentacao}
+
+\clearpage
+\mopsection{3}{Arquitetura e Demonstrador}
+\input{sections/s03_arquitetura}
+
+\clearpage
+\mopsection{4}{Conclusões e Desafios em Aberto}
+\input{sections/s04_conclusoes}
+
+\end{document}

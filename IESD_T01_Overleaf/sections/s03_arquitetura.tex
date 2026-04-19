@@ -1,0 +1,136 @@
+% -------------------------------------------------------
+% Secção 3 – Arquitetura e Demonstrador
+% Centrado na coordenação distribuída, atomicidade e concorrência
+% -------------------------------------------------------
+
+% -------------------------------------------------------
+\subsection*{3.1 Visão Geral da Arquitetura}
+\addcontentsline{toc}{subsection}{3.1 Visão Geral da Arquitetura}
+
+\textit{(Apresentar o diagrama de arquitetura do sistema — inserir figura \texttt{architecture\_diagram.png}. Descrever os cinco tipos de serviço e o seu papel no modelo X/Open DTP.)}
+
+O sistema implementa o modelo X/Open DTP com cinco elementos serviço, cujas responsabilidades
+estão sintetizadas na Tabela~\ref{tab:servicos}.
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Serviço} & \textbf{Papel X/Open} & \textbf{Descrição} \\
+\midrule
+\texttt{Service.Vector} (M instâncias) & Resource Manager & Gere um vetor de N inteiros; expõe operações transacionais XA via gRPC \\
+\texttt{Service.Client} (K instâncias) & Application Program & Executa transferências concorrentes entre vetores \\
+\texttt{Service.TM}                    & Transaction Manager & Coordena o 2PC entre os RMs participantes \\
+\texttt{Service.TPLM}                  & Gestor de Concorrência & Gere locks 2PL por recurso; tolerância a falhas via ZooKeeper \\
+\texttt{Service.Validator}             & Application Program & Verifica transacionalmente o invariante $\sum$ vetores \\
+\bottomrule
+\end{tabularx}
+\caption{Elementos serviço do sistema e mapeamento ao modelo X/Open DTP.}
+\label{tab:servicos}
+\end{table}
+
+% \begin{figure}[ht]
+% \centering
+% \includegraphics[width=0.90\textwidth]{architecture_diagram}
+% \caption{Diagrama de arquitetura do sistema.}
+% \label{fig:architecture}
+% \end{figure}
+% \FloatBarrier
+
+% -------------------------------------------------------
+\subsection*{3.2 Estratégia e Implementação}
+\addcontentsline{toc}{subsection}{3.2 Estratégia e Implementação}
+
+\textit{(Descrever as principais decisões de design: escolha de gRPC como protocolo de comunicação, Java/Quarkus como framework, Podman para containerização. Justificar cada escolha no contexto do modelo X/Open.)}
+
+\subsubsection*{Service.Vector (Resource Manager)}
+
+\textit{(Descrever a implementação: staging area por transação — os writes são temporários até \texttt{xa\_commit}; \texttt{xa\_rollback} descarta o staging. Operação \texttt{getSum} para uso pelo Validator. Mostrar excerto do \texttt{Dvector.proto}.)}
+
+\begin{lstlisting}[language=proto, caption={Contrato gRPC do Service.Vector (excerto).}]
+service DvectorService {
+  rpc Read      (ReadRequest)  returns (ReadResponse);
+  rpc Write     (WriteRequest) returns (WriteResponse);
+  rpc XaPrepare (XaRequest)   returns (XaResponse);
+  rpc XaCommit  (XaRequest)   returns (XaResponse);
+  rpc XaRollback(XaRequest)   returns (XaResponse);
+  rpc GetSum    (SumRequest)  returns (SumResponse);
+}
+\end{lstlisting}
+
+\subsubsection*{Service.TPLM (Two-Phase Lock Manager)}
+
+\textit{(Descrever: tabela de locks em memória, granularidade por vetor, compatibilidade read-read vs. read-write/write-write, fila de espera para locks em conflito, deteção de deadlock por timeout. Mostrar excerto do \texttt{tplm.proto}.)}
+
+\begin{lstlisting}[language=proto, caption={Contrato gRPC do Service.TPLM (excerto).}]
+service TplmService {
+  rpc AcquireLock  (LockRequest) returns (LockResponse);
+  rpc ReleaseLocks (TxRequest)   returns (Empty);
+  rpc GetLockTable (Empty)       returns (LockTableResponse);
+}
+\end{lstlisting}
+
+\subsubsection*{Service.TM (Transaction Manager)}
+
+\textit{(Descrever: geração de txId único, registo de RMs participantes, implementação do 2PC — Fase Prepare e Fase Commit/Abort, log persistente de transações para recuperação após falha, coordenação com TPLM para libertar locks após commit/rollback. Mostrar excerto do \texttt{Tm.proto}.)}
+
+\begin{lstlisting}[language=proto, caption={Contrato gRPC do Service.TM (excerto).}]
+service TmService {
+  rpc BeginTx    (BeginRequest)  returns (TxResponse);
+  rpc CommitTx   (TxRequest)    returns (TxResponse);
+  rpc AbortTx    (TxRequest)    returns (TxResponse);
+  rpc GetTxStatus(GetTxRequest) returns (TxResponse);
+}
+\end{lstlisting}
+
+\subsubsection*{Fluxo de uma Transferência}
+
+\textit{(Apresentar o diagrama de sequência de uma transferência entre dois vetores — figura \texttt{sequence\_diagram.png}.)}
+
+\begin{lstlisting}[language=bash, caption={Sequência de operações numa transferência (pseudocódigo).}]
+Client -> TM:         tx_begin()
+Client -> TPLM:       acquireWriteLock(txId, vecId_src, idx)
+Client -> TPLM:       acquireWriteLock(txId, vecId_dst, idx)
+Client -> Vector_src: read(idx)
+Client -> Vector_dst: read(idx)
+Client -> Vector_src: write(idx, new_value)
+Client -> Vector_dst: write(idx, new_value)
+Client -> TM:         tx_commit()
+  TM -> Vector_src:     xa_prepare()
+  TM -> Vector_dst:     xa_prepare()
+  TM -> Vector_src:     xa_commit()
+  TM -> Vector_dst:     xa_commit()
+  TM -> TPLM:           releaseLocks(txId)
+\end{lstlisting}
+
+% -------------------------------------------------------
+\subsection*{3.3 Tolerância a Falhas e Resiliência}
+\addcontentsline{toc}{subsection}{3.3 Tolerância a Falhas e Resiliência}
+
+\textit{(Discutir os aspetos de qualidade (\textit{reliability}) e resiliência do sistema. Descrever as duas estratégias implementadas: (1) eleição de líder no TPLM via ZooKeeper — z-nodes efémeros em \texttt{/tplm/leader}, deteção automática de falha quando o z-node desaparece; (2) log persistente de transações no TM para recuperação após falha. Descrever o comportamento observado no teste de failover: matar o líder TPLM durante uma transação em curso e verificar que o standby assume. Discutir os limites desta abordagem: janela de indisponibilidade durante a eleição, transações em curso que podem ser abortadas.)}
+
+% -------------------------------------------------------
+\subsection*{3.4 Validação de Desempenho}
+\addcontentsline{toc}{subsection}{3.4 Validação de Desempenho}
+
+\textit{(Apresentar os resultados da validação de desempenho: número de transações por unidade de tempo, tempos de resposta médios. Variar K (número de clientes: 1, 2, 4) e M (número de vetores: 1, 2, 4). Avaliar o impacto do protocolo 2PC e dos locks 2PL na latência. Caso os benchmarks não tenham sido executados, discutir teoricamente os resultados esperados e os fatores limitantes: o TPLM como bottleneck central, o overhead de dois round-trips de rede por fase do 2PC.)}
+
+\textit{(Inserir tabela de resultados ou discussão teórica.)}
+
+% -------------------------------------------------------
+\subsection*{3.5 Gestão do Ciclo de Vida dos Elementos de Infraestrutura}
+\addcontentsline{toc}{subsection}{3.5 Gestão do Ciclo de Vida dos Elementos de Infraestrutura}
+
+\textit{(Discutir como os elementos de infraestrutura são iniciados, configurados, monitorizados e terminados. Descrever a orquestração via Podman/podman-compose: sequência de arranque obrigatória (ZooKeeper $\to$ TPLM $\to$ TM $\to$ Vector(es) $\to$ Client/Validator), dependências entre serviços, variáveis de ambiente para configuração. Mostrar excerto do \texttt{podman-compose.yml}. Discutir os desafios de gestão do ciclo de vida em sistemas com múltiplos elementos serviço interdependentes.)}
+
+% -------------------------------------------------------
+\subsection*{3.6 Heterogeneidade Tecnológica — Hipótese de Quadro Tecnológico Diferenciado}
+\addcontentsline{toc}{subsection}{3.6 Heterogeneidade Tecnológica — Hipótese de Quadro Tecnológico Diferenciado}
+
+\textit{(Discutir a hipótese de os elementos serviço terem sido desenvolvidos em diferentes ecossistemas tecnológicos — Java/Quarkus, Microsoft/C\#/.NET, Python — como aconteceria em cenário empresarial real com culturas tecnológicas distintas. Analisar como o protocolo gRPC, com contratos \texttt{.proto} independentes da linguagem, viabiliza esta interoperabilidade. Identificar o que muda: geração de stubs para cada linguagem (ferramentas \texttt{protoc} + plugin), gestão de dependências, containerização. O que permanece igual: o contrato de interface, o protocolo de rede, a semântica das operações.)}
+
+% -------------------------------------------------------
+\subsection*{3.7 Escalabilidade}
+\addcontentsline{toc}{subsection}{3.7 Escalabilidade}
+
+\textit{(Discutir o comportamento do sistema quando K (clientes) e M (vetores) crescem. Identificar os bottlenecks: o TPLM é um ponto central de contenção — todos os clientes competem pelos mesmos locks; o TM é stateful e centralizado. Analisar estratégias de escalabilidade: particionamento do espaço de locks por intervalo de vecId, replicação do TM com eleição de líder via ZooKeeper, adição dinâmica de instâncias Vector. Relacionar com o papel do service registry (Consul) como facilitador desta escalabilidade dinâmica.)}

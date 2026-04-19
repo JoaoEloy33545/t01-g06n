@@ -1,0 +1,62 @@
+% -------------------------------------------------------
+% Secção 2 – Conhecimentos na Fundamentação da Abordagem
+% -------------------------------------------------------
+
+% -------------------------------------------------------
+\subsection*{2.1 Coordenação de Transações Distribuídas — Modelo X/Open}
+\addcontentsline{toc}{subsection}{2.1 Coordenação de Transações Distribuídas — Modelo X/Open}
+
+\textit{(Discutir o problema de coordenação centralizada vs. distribuída de transações distribuídas. Apresentar o modelo X/Open DTP: papéis AP, TM e RM; interfaces TX (\texttt{tx\_begin}, \texttt{tx\_commit}, \texttt{tx\_rollback}) e XA (\texttt{xa\_prepare}, \texttt{xa\_commit}, \texttt{xa\_rollback}). Apresentar o protocolo Two-Phase Commit (2PC) e o Two-Phase Lock Manager (TPLM/2PL) como mecanismos de coordenação da concorrência. Mapear estes papéis para os elementos serviço implementados.)}
+
+O modelo \textit{X/Open Distributed Transaction Processing} (DTP) define uma arquitetura
+padronizada para a coordenação de transações em sistemas distribuídos, assente em três
+componentes com responsabilidades bem delimitadas:
+
+\begin{itemize}
+  \item \textbf{Application Program (AP)} --- inicia e termina transações via interface TX;
+        no sistema implementado, corresponde ao \texttt{Service.Client} e ao \texttt{Service.Validator}.
+  \item \textbf{Transaction Manager (TM)} --- coordena o protocolo 2PC entre os RMs participantes;
+        implementado como \texttt{Service.TM}.
+  \item \textbf{Resource Manager (RM)} --- gere um recurso transacional e expõe a interface XA;
+        implementado como \texttt{Service.Vector}.
+\end{itemize}
+
+\textit{(Detalhar o protocolo 2PC: Fase 1 Prepare — o TM envia \texttt{xa\_prepare} a todos os RMs e aguarda votos; Fase 2 Commit/Abort — conforme os votos, o TM envia \texttt{xa\_commit} ou \texttt{xa\_rollback}. Discutir o problema do TM como ponto de falha único e a necessidade de log persistente para recuperação.)}
+
+\textit{(Detalhar o protocolo 2PL: fase de expansão — aquisição de locks antes de aceder aos dados; fase de contração — libertação após commit/rollback. Discutir a garantia de serializabilidade. Apresentar como exemplo concreto a verificação transacional do invariante: o \texttt{Service.Validator} adquire read locks em todos os elementos antes de somar, garantindo uma leitura consistente em execução concorrente.)}
+
+% -------------------------------------------------------
+\subsection*{2.2 Dificuldade de Desenvolvimento com Múltiplos Elementos Serviço}
+\addcontentsline{toc}{subsection}{2.2 Dificuldade de Desenvolvimento com Múltiplos Elementos Serviço}
+
+\textit{(Discutir a dificuldade inerente ao desenvolvimento de sistemas informáticos com múltiplos elementos Serviço independentes. Considerar, em particular, os modelos de programação discutidos em IESD e em Computação Distribuída: invocação remota (RPC/gRPC), gestão de estado distribuído, falhas parciais, ordenação de mensagens. Discutir como a interdependência entre serviços cresce com o número de elementos e com a heterogeneidade, podendo atingir proporções de elevada complexidade.)}
+
+% -------------------------------------------------------
+\subsection*{2.3 Aplicabilidade de MOM na Coordenação}
+\addcontentsline{toc}{subsection}{2.3 Aplicabilidade de MOM na Coordenação}
+
+\textit{(Discutir a aplicabilidade de um elemento Serviço de mediação \textit{Message Oriented Middleware} (MOM) — e.g., RabbitMQ, Apache Kafka — na interação e coordenação entre \texttt{Service.Client}, \texttt{Service.Vector}, \texttt{Service.TM} e \texttt{Service.TPLM}. Vantagens: desacoplamento temporal, tolerância a falhas assíncrona, buffering de mensagens. Desvantagens: complexidade adicional, semântica de entrega (at-least-once vs. exactly-once), latência acrescida. Justificar a opção por gRPC síncrono neste trabalho: adequação ao modelo 2PC que requer confirmação explícita de cada fase.)}
+
+% -------------------------------------------------------
+\subsection*{2.4 Heterogeneidade Tecnológica entre Elementos Serviço}
+\addcontentsline{toc}{subsection}{2.4 Heterogeneidade Tecnológica entre Elementos Serviço}
+
+\textit{(Discutir a possibilidade de os elementos serviço serem implementados em tecnologias distintas — e.g., Java/Quarkus, Microsoft/C\#/.NET, Python — na hipótese de empresas com culturas tecnológicas diferentes colaborarem no mesmo sistema. Analisar como o protocolo gRPC, com a definição de contratos em \texttt{.proto} independentes da linguagem, viabiliza esta interoperabilidade. Identificar os limites desta interoperabilidade: dependências de plataforma, diferenças na gestão de threads e concorrência, serialização de dados.)}
+
+% -------------------------------------------------------
+\subsection*{2.5 Escalabilidade do Sistema}
+\addcontentsline{toc}{subsection}{2.5 Escalabilidade do Sistema}
+
+\textit{(Discutir um cenário em que é instanciado um número elevado de serviços cliente (K) e vetor (M). Identificar os bottlenecks de escalabilidade: o \texttt{Service.TPLM} é um ponto central de contenção de locks; o \texttt{Service.TM} é stateful e centralizado. Analisar estratégias de escalabilidade horizontal: particionamento do espaço de locks, replicação do TM com eleição de líder. Relacionar com o papel do ZooKeeper na gestão de múltiplas instâncias do TPLM.)}
+
+% -------------------------------------------------------
+\subsection*{2.6 Transações ACID vs.\ LLT/Saga}
+\addcontentsline{toc}{subsection}{2.6 Transações ACID vs.\ LLT/Saga}
+
+\textit{(Apresentar as propriedades ACID: Atomicidade, Consistência, Isolamento, Durabilidade. Confrontar com o modelo de transações de longa duração LLT/Saga: compensação em vez de rollback, ausência de isolamento forte (sem locks prolongados), adequação a workflows de longa duração com múltiplos passos. Discutir em que medida o cenário deste trabalho — transferências curtas entre vetores — favorece o modelo ACID, e em que contextos um modelo Saga seria preferível.)}
+
+% -------------------------------------------------------
+\subsection*{2.7 Service Registry e Transparência à Localização (Consul)}
+\addcontentsline{toc}{subsection}{2.7 Service Registry e Transparência à Localização (Consul)}
+
+\textit{(Discutir a abordagem do trabalho em contraste com o exemplo entregue em que a interação entre elementos serviço é mediada por um service registry — o projeto Consul. Apresentar as vantagens do Consul: descoberta dinâmica, health checks, transparência à localização (os clientes não precisam de conhecer os endereços dos servidores). Justificar a opção de não implementar: no âmbito deste trabalho, a configuração estática via variáveis de ambiente é suficiente e simplifica o demonstrador. Discutir o impacto desta opção na escalabilidade e na gestão do ciclo de vida.)}
