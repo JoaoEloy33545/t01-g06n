@@ -60,6 +60,8 @@ Ao executar a verificação dentro de uma transação com read locks em todos os
 A implementação do código está a ser desenvolvida pelo David Marcelino num repositório separado:
 `https://github.com/DavidmMar/IESD-2526SV` (pasta `tp1/`).
 
+**Clone local (feito em 19 Abril 2026):** `C:\Isel\iesd_lab\Trabalho1\DavidRepo`
+
 Serviços já implementados: `CSerDvector`, `TransactionManager`, `TwoPhaseLockManager`, `CSerDvectorCli`.
 Em falta: integração do ZooKeeper no TPLM, `Service.Validator`, `podman-compose.yml` unificado, benchmarks.
 Desvio ao plano: locks por vetor inteiro em vez de por `(vecId, index)`.
@@ -97,14 +99,14 @@ O fluxo decidido: avançar com o **Capítulo 2 antes de qualquer outro** — é 
 
 **Sequência de trabalho para o relatório:**
 
-1. **Cap. 2 — Fundamentação** ← a fazer agora, com o Claude no Cowork
-   - [ ] 2.1 Coordenação de Transações Distribuídas — Modelo X/Open (2PC, 2PL, TX/XA)
-   - [ ] 2.2 Dificuldade com múltiplos elementos Serviço
-   - [ ] 2.3 Aplicabilidade do MOM
-   - [ ] 2.4 Heterogeneidade tecnológica
-   - [ ] 2.5 Escalabilidade
-   - [ ] 2.6 ACID vs. LLT/Saga
-   - [ ] 2.7 Consul / Service Registry
+1. **Cap. 2 — Fundamentação** ✅ CONCLUÍDO (19 Abril 2026)
+   - [x] 2.1 Coordenação de Transações Distribuídas — Modelo X/Open (2PC, 2PL, TX/XA)
+   - [x] 2.2 Dificuldade com múltiplos elementos Serviço
+   - [x] 2.3 Aplicabilidade do MOM
+   - [x] 2.4 Heterogeneidade tecnológica
+   - [x] 2.5 Escalabilidade
+   - [x] 2.6 ACID vs. LLT/Saga
+   - [x] 2.7 Consul / Service Registry
 
 2. **Cap. 1 — Introdução** ← escrever após Cap. 2 (a intro resume o que foi escrito)
    - [ ] Síntese do documento

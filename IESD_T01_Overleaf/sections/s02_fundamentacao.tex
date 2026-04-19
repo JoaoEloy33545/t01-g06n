@@ -6,7 +6,15 @@
 \subsection*{2.1 Coordenação de Transações Distribuídas — Modelo X/Open}
 \addcontentsline{toc}{subsection}{2.1 Coordenação de Transações Distribuídas — Modelo X/Open}
 
-\textit{(Discutir o problema de coordenação centralizada vs. distribuída de transações distribuídas. Apresentar o modelo X/Open DTP: papéis AP, TM e RM; interfaces TX (\texttt{tx\_begin}, \texttt{tx\_commit}, \texttt{tx\_rollback}) e XA (\texttt{xa\_prepare}, \texttt{xa\_commit}, \texttt{xa\_rollback}). Apresentar o protocolo Two-Phase Commit (2PC) e o Two-Phase Lock Manager (TPLM/2PL) como mecanismos de coordenação da concorrência. Mapear estes papéis para os elementos serviço implementados.)}
+Quando múltiplos serviços com estado participam na mesma unidade de trabalho, a questão central
+é como garantir que todos confirmam ou todos revertem as suas alterações --- mesmo em presença de
+falhas parciais de rede ou de nós. A abordagem de \textbf{coordenação centralizada}, em que um
+componente dedicado (o TM) dirige o protocolo de commit, oferece semânticas fortes e um modelo
+de falha bem definido, à custa de tornar o TM um potencial ponto único de falha. A
+\textbf{coordenação distribuída}, em que cada participante toma decisões autónomas, evita este
+ponto único mas exige consenso entre os participantes, aumentando a complexidade e a latência
+do protocolo. O modelo X/Open DTP adota a abordagem centralizada, separando claramente as
+responsabilidades de cada componente através de interfaces padronizadas.
 
 O modelo \textit{X/Open Distributed Transaction Processing} (DTP) define uma arquitetura
 padronizada para a coordenação de transações em sistemas distribuídos, assente em três
@@ -21,42 +29,241 @@ componentes com responsabilidades bem delimitadas:
         implementado como \texttt{Service.Vector}.
 \end{itemize}
 
-\textit{(Detalhar o protocolo 2PC: Fase 1 Prepare — o TM envia \texttt{xa\_prepare} a todos os RMs e aguarda votos; Fase 2 Commit/Abort — conforme os votos, o TM envia \texttt{xa\_commit} ou \texttt{xa\_rollback}. Discutir o problema do TM como ponto de falha único e a necessidade de log persistente para recuperação.)}
+O protocolo \textit{Two-Phase Commit} (2PC) é o mecanismo pelo qual o TM garante atomicidade
+distribuída. Na \textbf{Fase 1 — Prepare}, o TM envia \texttt{xa\_prepare()} a cada RM participante;
+cada RM persiste em armazenamento estável toda a informação necessária para commit ou rollback e
+responde afirmativamente (\texttt{XA\_OK}) ou negativamente (\texttt{XA\_RB*}), sendo que uma
+resposta negativa veta imediatamente a transação global. Na \textbf{Fase 2 — Commit/Rollback},
+se todos os RMs votaram afirmativamente, o TM regista a decisão de commit em log persistente e
+envia \texttt{xa\_commit()} a todos; se qualquer RM vetou, o TM envia \texttt{xa\_rollback()} a
+todos os restantes. A política de \textit{presumed rollback} — na ausência de registo para uma
+transação, assume-se que foi revertida — reduz o número de escritas em armazenamento estável no
+caminho mais comum.
 
-\textit{(Detalhar o protocolo 2PL: fase de expansão — aquisição de locks antes de aceder aos dados; fase de contração — libertação após commit/rollback. Discutir a garantia de serializabilidade. Apresentar como exemplo concreto a verificação transacional do invariante: o \texttt{Service.Validator} adquire read locks em todos os elementos antes de somar, garantindo uma leitura consistente em execução concorrente.)}
+O TM constitui um potencial ponto único de falha: se falhar após completar a Fase~1 mas antes de
+concluir a Fase~2, os RMs participantes ficam bloqueados num estado \textit{in-doubt}, incapazes
+de libertar recursos. A mitigação é um \textbf{log de transações persistente}: ao recuperar, o TM
+lê o log e conclui as transações pendentes, chamando \texttt{xa\_recover()} em cada RM para obter
+a lista de branches preparados. O mapeamento das interfaces TX e XA é direto:
+\texttt{tx\_begin()} desencadeia \texttt{xa\_start()}; \texttt{tx\_commit()} desencadeia
+\texttt{xa\_end()} + \texttt{xa\_prepare()} + \texttt{xa\_commit()} (ou
+\texttt{xa\_rollback()} em caso de veto); \texttt{tx\_rollback()} desencadeia
+\texttt{xa\_end()} + \texttt{xa\_rollback()}.
+
+A coordenação da concorrência é assegurada pelo protocolo \textit{Two-Phase Locking} (2PL), que
+garante serializabilidade dos escalonamentos concorrentes. O 2PL define duas fases: na
+\textbf{fase de crescimento} (\textit{growing phase}), uma transação adquire locks mas nunca os
+liberta; na \textbf{fase de contração} (\textit{shrinking phase}), liberta locks mas nunca adquire
+novos. O ponto de transição — o \textit{lock point} — coincide com o commit ou rollback.
+
+O sistema distingue dois tipos de lock: \textbf{ReadLock} (partilhado, S) para operações de
+leitura, e \textbf{WriteLock} (exclusivo, X) para operações de escrita. Dois ReadLocks são
+compatíveis entre transações concorrentes; qualquer combinação envolvendo um WriteLock gera
+conflito e bloqueia a transação solicitante até a detentora libertar o recurso. A granularidade
+dos locks é ao nível do par \texttt{(vecId,~index)} — cada posição de cada vetor é um recurso
+independente — minimizando a contenção entre transações que acedem a elementos distintos.
+
+A verificação do invariante pelo \texttt{Service.Validator} ilustra concretamente a necessidade do
+2PL: para calcular a soma total de todos os elementos, o Validator inicia uma transação, adquire
+ReadLocks em \emph{todos} os pares \texttt{(vecId, index)} e só então lê os valores e calcula
+o somatório. Sem esta proteção, uma transferência em execução poderia ter já debitado o valor na
+origem mas ainda não creditado no destino, produzindo uma leitura inconsistente. Com 2PL, os
+ReadLocks bloqueiam qualquer WriteLock concorrente nesses elementos, garantindo que a leitura é
+serializada. A deteção de deadlocks é realizada por timeout configurável: uma transação que não
+consiga adquirir os locks necessários dentro do intervalo definido é abortada, libertando os seus
+recursos e permitindo o progresso das transações concorrentes.
 
 % -------------------------------------------------------
 \subsection*{2.2 Dificuldade de Desenvolvimento com Múltiplos Elementos Serviço}
 \addcontentsline{toc}{subsection}{2.2 Dificuldade de Desenvolvimento com Múltiplos Elementos Serviço}
 
-\textit{(Discutir a dificuldade inerente ao desenvolvimento de sistemas informáticos com múltiplos elementos Serviço independentes. Considerar, em particular, os modelos de programação discutidos em IESD e em Computação Distribuída: invocação remota (RPC/gRPC), gestão de estado distribuído, falhas parciais, ordenação de mensagens. Discutir como a interdependência entre serviços cresce com o número de elementos e com a heterogeneidade, podendo atingir proporções de elevada complexidade.)}
+O desenvolvimento de sistemas informáticos compostos por múltiplos elementos Serviço independentes
+apresenta desafios que crescem super-linearmente com o número de componentes. Ao contrário de
+um sistema monolítico, em que todas as unidades de execução partilham o mesmo espaço de
+endereçamento e as falhas tendem a ser totais, num sistema distribuído as \textbf{falhas são
+parciais}: um serviço pode estar ativo enquanto outro se torna inacessível, e não existe forma de
+distinguir um nó lento de um nó falhado sem o recurso a timeouts — a chamada
+\textit{impossibilidade de deteção de falhas} em modelos assíncronos.
+
+No modelo de programação por \textbf{invocação remota} (RPC/gRPC), a sintaxe das chamadas
+aproxima-se das chamadas locais, mas a semântica é fundamentalmente diferente: latência variável,
+risco de duplicação de mensagens (\textit{at-least-once}), e necessidade de tratamento explícito
+de timeouts e retentativas. Cada chamada gRPC entre serviços é um ponto de falha potencial que
+exige decisão programática: abortar, retentar, ou propagar o erro.
+
+A \textbf{gestão de estado distribuído} acrescenta complexidade adicional. Quando o estado
+relevante para uma operação está disperso por $M$ instâncias de \texttt{Service.Vector}, qualquer
+operação que abranja mais do que uma instância deve coordenar-se com o TM e o TPLM para garantir
+consistência. O número de mensagens de coordenação por transação cresce com o número de RMs
+participantes, e a probabilidade de falha durante o protocolo aumenta proporcionalmente.
+
+A \textbf{heterogeneidade} dos elementos exacerba estas dificuldades: diferentes implementações
+podem ter políticas distintas de gestão de threads, de timeouts, e de comportamento perante erros
+de rede. Garantir que um sistema composto por $N$ serviços desenvolvidos por equipas distintas se
+comporta corretamente perante falhas parciais requer uma disciplina rigorosa de contratos de
+interface — papel desempenhado, neste trabalho, pelas especificações TX e XA e pelos ficheiros
+\texttt{.proto} do gRPC. À medida que o número de serviços e as suas interdependências crescem,
+a complexidade de raciocinar sobre o comportamento global do sistema em presença de falhas atinge
+facilmente proporções intratáveis sem uma arquitetura de coordenação bem definida.
 
 % -------------------------------------------------------
 \subsection*{2.3 Aplicabilidade de MOM na Coordenação}
 \addcontentsline{toc}{subsection}{2.3 Aplicabilidade de MOM na Coordenação}
 
-\textit{(Discutir a aplicabilidade de um elemento Serviço de mediação \textit{Message Oriented Middleware} (MOM) — e.g., RabbitMQ, Apache Kafka — na interação e coordenação entre \texttt{Service.Client}, \texttt{Service.Vector}, \texttt{Service.TM} e \texttt{Service.TPLM}. Vantagens: desacoplamento temporal, tolerância a falhas assíncrona, buffering de mensagens. Desvantagens: complexidade adicional, semântica de entrega (at-least-once vs. exactly-once), latência acrescida. Justificar a opção por gRPC síncrono neste trabalho: adequação ao modelo 2PC que requer confirmação explícita de cada fase.)}
+A adoção de um \textit{Message Oriented Middleware} (MOM) --- como Apache Kafka ou RabbitMQ ---
+na interação entre \texttt{Service.Client}, \texttt{Service.Vector}, \texttt{Service.TM} e
+\texttt{Service.TPLM} apresenta vantagens relevantes para certos padrões de comunicação. O
+\textbf{desacoplamento temporal} permite que o produtor e o consumidor de mensagens não estejam
+disponíveis em simultâneo: um cliente poderia enfileirar pedidos de transferência mesmo que o TM
+estivesse momentaneamente indisponível. O \textbf{desacoplamento espacial} liberta o produtor do
+conhecimento do endereço do consumidor, e o \textbf{buffering} de mensagens absorve picos de
+carga sem perda de pedidos.
+
+No entanto, a utilização de MOM no contexto da coordenação transacional com 2PC apresenta
+incompatibilidades fundamentais. O protocolo 2PC requer \textbf{confirmação explícita e ordenada
+de cada fase}: o TM não pode emitir \texttt{xa\_commit()} sem ter recebido previamente resposta
+de \texttt{xa\_prepare()} de todos os RMs. A semântica \textit{at-least-once} típica de um MOM
+--- em que uma mensagem pode ser entregue mais de uma vez em caso de falha --- é incompatível
+com a natureza das operações XA, a menos que se implemente deduplicação ao nível da aplicação,
+o que acrescenta complexidade considerável. A semântica \textit{exactly-once}, disponível em
+condições restritas em sistemas como o Kafka, introduz latência adicional e dependência de
+funcionalidades de transação internas ao MOM, criando um segundo nível de coordenação transacional.
+
+Por estas razões, este trabalho adota \textbf{comunicação gRPC síncrona} como protocolo de
+coordenação: a natureza \textit{request-response} mapeia naturalmente para o fluxo de
+confirmações do 2PC, e a definição de contratos em Protobuf garante serializações eficientes e
+determinísticas. O MOM poderia ser equacionado para fluxos de menor criticidade transacional ---
+por exemplo, notificações assíncronas de estado após a conclusão de uma transação --- mas não
+como transporte primário da coordenação 2PC.
 
 % -------------------------------------------------------
 \subsection*{2.4 Heterogeneidade Tecnológica entre Elementos Serviço}
 \addcontentsline{toc}{subsection}{2.4 Heterogeneidade Tecnológica entre Elementos Serviço}
 
-\textit{(Discutir a possibilidade de os elementos serviço serem implementados em tecnologias distintas — e.g., Java/Quarkus, Microsoft/C\#/.NET, Python — na hipótese de empresas com culturas tecnológicas diferentes colaborarem no mesmo sistema. Analisar como o protocolo gRPC, com a definição de contratos em \texttt{.proto} independentes da linguagem, viabiliza esta interoperabilidade. Identificar os limites desta interoperabilidade: dependências de plataforma, diferenças na gestão de threads e concorrência, serialização de dados.)}
+Um requisito implícito de qualquer sistema distribuído aberto é a possibilidade de os seus
+elementos serem desenvolvidos por equipas com culturas tecnológicas distintas. Num cenário
+empresarial real, o \texttt{Service.Vector} poderia ser implementado em Java/Quarkus por uma
+equipa, o \texttt{Service.TM} em Python por outra, e o \texttt{Service.Client} em C\#/.NET por
+uma terceira, refletindo escolhas motivadas por competências internas, ecossistemas de bibliotecas
+disponíveis, ou requisitos de desempenho específicos.
+
+O protocolo \textbf{gRPC} viabiliza esta interoperabilidade através da definição dos contratos de
+interface em ficheiros \texttt{.proto} independentes da linguagem de implementação. O compilador
+\texttt{protoc} gera stubs cliente e servidor para Java, Python, C\#, Go e outras linguagens,
+todos partilhando a mesma serialização binária (Protocol Buffers). Um cliente Java pode assim
+invocar um serviço Python sem qualquer adaptação adicional, desde que ambos respeitem o mesmo
+contrato \texttt{.proto}. Esta abordagem é conceitualmente análoga ao princípio de
+substituibilidade definido pela especificação XA: a estrutura \texttt{xa\_switch\_t} é o contrato
+que qualquer RM deve publicar, independentemente da sua tecnologia interna, permitindo ao TM
+trabalhar com RMs de fornecedores distintos sem recompilação. Os ficheiros \texttt{.proto}
+desempenham esse mesmo papel de contrato standard neste sistema.
+
+Os limites desta interoperabilidade merecem ser considerados: diferenças na gestão de threads
+entre linguagens podem afetar o comportamento sob carga (o modelo de I/O assíncrono do Python
+\textit{asyncio} vs.\ o modelo de threads do Java); a gestão de memória e o \textit{garbage
+collection} podem introduzir latências não determinísticas; e as bibliotecas gRPC de diferentes
+plataformas podem apresentar comportamentos distintos perante condições de erro de rede, exigindo
+estratégias de retry e timeout cuidadosamente alinhadas entre todos os participantes.
 
 % -------------------------------------------------------
 \subsection*{2.5 Escalabilidade do Sistema}
 \addcontentsline{toc}{subsection}{2.5 Escalabilidade do Sistema}
 
-\textit{(Discutir um cenário em que é instanciado um número elevado de serviços cliente (K) e vetor (M). Identificar os bottlenecks de escalabilidade: o \texttt{Service.TPLM} é um ponto central de contenção de locks; o \texttt{Service.TM} é stateful e centralizado. Analisar estratégias de escalabilidade horizontal: particionamento do espaço de locks, replicação do TM com eleição de líder. Relacionar com o papel do ZooKeeper na gestão de múltiplas instâncias do TPLM.)}
+Considere-se um cenário em que são instanciados $K$ serviços cliente e $M$ serviços vetor, com
+$K$ e $M$ de ordem elevada. Neste contexto, a arquitetura apresenta dois \textit{bottlenecks}
+de escalabilidade estruturais.
+
+O \textbf{\texttt{Service.TPLM}} é um coordenador centralizado de locks: com $K$ clientes a
+solicitar locks concorrentemente, o número de pedidos por unidade de tempo cresce com $K$, e a
+latência de cada pedido aumenta com a profundidade da fila de espera. Em cenários de alta
+contenção --- transações que acedem ao mesmo par \texttt{(vecId, index)} --- o TPLM torna-se o
+gargalo dominante do sistema. A escalabilidade horizontal exige \textbf{particionamento do espaço
+de locks}: diferentes instâncias do TPLM seriam responsáveis por subconjuntos disjuntos de
+recursos (por exemplo, por \texttt{vecId}), eliminando a contenção entre transações que acedem a
+vetores distintos. Esta estratégia requer um mecanismo de encaminhamento para que o
+\texttt{Service.Client} saiba a qual instância de TPLM dirigir cada pedido de lock.
+
+O \textbf{\texttt{Service.TM}} é \textit{stateful} e centralizado: mantém o estado de todas as
+transações ativas e coordena o 2PC com todos os RMs participantes. Num modelo ativo-passivo com
+eleição de líder via ZooKeeper, a disponibilidade é garantida após falha, mas o throughput é
+limitado pela capacidade de uma única instância ativa.
+
+O \textbf{Apache ZooKeeper} desempenha um papel duplo neste contexto: fornece a infraestrutura de
+\textbf{eleição de líder} que garante que o sistema continua operacional após falha de uma
+instância do TPLM ou TM (usando z-nodes efémeros --- o nó que detém o z-node \texttt{/tplm/leader}
+é o líder; quando falha, o z-node desaparece e os candidatos em espera iniciam nova eleição); e
+pode ser usado como \textbf{registo de configuração} para as instâncias dos serviços, facilitando
+a adição dinâmica de novos nós ao sistema em crescimento. O protocolo ZAB (\textit{ZooKeeper
+Atomic Broadcast}) que sustenta o ZooKeeper é estruturalmente análogo ao 2PC do modelo X/Open:
+o Leader propõe (\texttt{PROPOSAL}), os Followers aceitam (\texttt{ACK}), e o Leader confirma
+(\texttt{COMMIT}) após obter ACKs de um quórum --- garantindo consistência mesmo em presença de
+falhas parciais.
 
 % -------------------------------------------------------
 \subsection*{2.6 Transações ACID vs.\ LLT/Saga}
 \addcontentsline{toc}{subsection}{2.6 Transações ACID vs.\ LLT/Saga}
 
-\textit{(Apresentar as propriedades ACID: Atomicidade, Consistência, Isolamento, Durabilidade. Confrontar com o modelo de transações de longa duração LLT/Saga: compensação em vez de rollback, ausência de isolamento forte (sem locks prolongados), adequação a workflows de longa duração com múltiplos passos. Discutir em que medida o cenário deste trabalho — transferências curtas entre vetores — favorece o modelo ACID, e em que contextos um modelo Saga seria preferível.)}
+As quatro propriedades ACID constituem o contrato de correção das transações no modelo X/Open
+DTP. A \textbf{Atomicidade} é garantida pelo protocolo 2PC: ou todos os RMs fazem commit, ou
+todos fazem rollback --- a presunção de rollback garante este comportamento mesmo em caso de
+falha do TM. A \textbf{Consistência} é responsabilidade conjunta do AP (que não deve violar os
+invariantes de domínio ao compor as operações) e do TPLM (que garante que não existem estados
+intermédios visíveis a outras transações durante a execução). O \textbf{Isolamento} é garantido
+pelo 2PL: nenhuma transação vê os efeitos parciais de outra, por força dos locks de leitura e
+escrita detidos até ao commit. A \textbf{Durabilidade} exige que cada RM persista as suas
+alterações em armazenamento estável antes de responder afirmativamente ao \texttt{xa\_prepare()},
+garantindo que os efeitos de uma transação confirmada sobrevivem a falhas subsequentes do sistema.
+
+Este modelo é adequado para transações de curta duração, como as transferências entre vetores
+deste trabalho, em que os locks são detidos por milissegundos a segundos e o custo do 2PC é
+amortizado pela brevidade da operação.
+
+Em contrapartida, em cenários de longa duração --- por exemplo, a reserva coordenada de voo,
+hotel e transfer numa agência de viagens, cujas confirmações externas podem demorar horas --- o
+modelo ACID com 2PL apresenta problemas sérios: os locks mantidos durante períodos prolongados
+bloqueiam todo o sistema, e um rollback global pode ser semanticamente impossível (um voo já
+confirmado com o operador aéreo requer um processo de cancelamento, não uma simples reversão).
+
+O padrão \textbf{Saga} (Garcia-Molina, 1987) responde a esta limitação decompondo uma
+\textit{Long-Lived Transaction} (LLT) numa sequência de transações curtas e atómicas, cada
+uma emparelhada com uma transação de \textbf{compensação} capaz de desfazer o seu efeito. Se
+uma etapa intermédia falhar, as compensações das etapas anteriores são executadas em ordem
+inversa. O preço é a \textbf{ausência de isolamento forte}: entre o commit de uma etapa e a
+eventual execução da sua compensação, os efeitos intermédios são visíveis a outras transações,
+podendo ocorrer anomalias de leitura não reproduzíveis no modelo ACID clássico. No contexto
+deste trabalho, o modelo ACID é a escolha natural: as transferências são curtas, o invariante
+de somatório constante exige isolamento forte, e não existem confirmações externas ao sistema
+que tornem o rollback semanticamente impossível.
 
 % -------------------------------------------------------
 \subsection*{2.7 Service Registry e Transparência à Localização (Consul)}
 \addcontentsline{toc}{subsection}{2.7 Service Registry e Transparência à Localização (Consul)}
 
-\textit{(Discutir a abordagem do trabalho em contraste com o exemplo entregue em que a interação entre elementos serviço é mediada por um service registry — o projeto Consul. Apresentar as vantagens do Consul: descoberta dinâmica, health checks, transparência à localização (os clientes não precisam de conhecer os endereços dos servidores). Justificar a opção de não implementar: no âmbito deste trabalho, a configuração estática via variáveis de ambiente é suficiente e simplifica o demonstrador. Discutir o impacto desta opção na escalabilidade e na gestão do ciclo de vida.)}
+A \textbf{transparência à localização} é um requisito crítico em sistemas distribuídos dinâmicos:
+os clientes não devem precisar de conhecer os endereços físicos dos serviços que invocam,
+especialmente quando esses serviços podem ser replicados, migrados ou substituídos. O projeto
+\textbf{Consul}, desenvolvido pela HashiCorp, é um \textit{service registry} que responde a este
+requisito: cada serviço regista-se no arranque com o seu endereço e porta, e os clientes
+consultam o Consul para descobrir as instâncias disponíveis. O Consul oferece ainda
+\textit{health checks} periódicos --- removendo automaticamente do registo instâncias que deixaram
+de responder --- e a possibilidade de armazenar configuração distribuída acessível a todos os
+serviços em tempo de execução.
+
+No exemplo entregue em aula prática, os serviços registam-se no Consul via
+\texttt{ConsulRegistrar} no arranque, e os clientes resolvem os endereços dinamicamente em cada
+invocação. Esta abordagem simplifica a gestão do ciclo de vida dos serviços: adicionar ou remover
+instâncias não requer reconfiguração dos clientes.
+
+Neste trabalho, optou-se por \textbf{não implementar o Consul}: a configuração estática dos
+endereços dos serviços via variáveis de ambiente é suficiente para o demonstrador, cujo número
+de instâncias é fixo e controlado. Esta opção simplifica o \textit{setup} e elimina a dependência
+de uma infraestrutura adicional, reduzindo o número de pontos de falha no contexto do
+demonstrador.
+
+O impacto desta opção na escalabilidade e na gestão do ciclo de vida é, no entanto, relevante
+para um contexto de produção: com $K$ clientes e $M$ vetores dinâmicos, a configuração estática
+tornaria o sistema operacionalmente inflexível --- qualquer alteração ao número de instâncias
+exigiria reconfiguração e reinicialização dos clientes. O Consul (ou uma solução equivalente,
+como o próprio ZooKeeper usado como registo de serviços) seria a abordagem natural para gerir o
+ciclo de vida em produção, assegurando que novos nós são descobertos automaticamente e que
+instâncias falhadas são removidas sem intervenção manual.
