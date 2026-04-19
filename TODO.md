@@ -112,15 +112,16 @@ O fluxo decidido: avançar com o **Capítulo 2 antes de qualquer outro** — é 
    - [ ] Síntese do documento
    - [ ] Estrutura do documento
 
-3. **Cap. 3 — Arquitetura e Demonstrador** ← depende de analisar o código do David
-   - [ ] Analisar implementação do David (ficheiros Java + protos)
-   - [ ] 3.1 Visão geral + diagrama de arquitetura
-   - [ ] 3.2 Estratégia e implementação (descrever cada serviço com excertos de código)
-   - [ ] 3.3 Tolerância a falhas (ZooKeeper)
-   - [ ] 3.4 Validação de desempenho
-   - [ ] 3.5 Ciclo de vida / podman-compose
-   - [ ] 3.6 Heterogeneidade tecnológica (quadro diferenciado)
-   - [ ] 3.7 Escalabilidade
+3. **Cap. 3 — Arquitetura e Demonstrador** ✅ RASCUNHO CONCLUÍDO (19 Abril 2026)
+   - [x] Analisar implementação do David (ficheiros Java + protos)
+   - [x] 3.1 Visão geral + diagrama de arquitetura (TikZ)
+   - [x] 3.2 Estratégia e implementação (excertos reais: DvectorImpl, TwoPhaseLockManagerImpl, TransactionManagerImpl)
+   - [x] 3.3 Fluxo completo de uma transação (diagrama de sequência TikZ)
+   - [x] 3.4 Tolerância a falhas (ZooKeeper presente mas não integrado — TODO marcado)
+   - [x] 3.5 Ciclo de vida / podman-compose (parcial — TODO marcado)
+   - [x] 3.6 Validação de desempenho (análise teórica — benchmarks TODO)
+   - [x] 3.7 Escalabilidade
+   - [ ] **REVISÃO PENDENTE** após pull do David com código atualizado + READMEs
 
 4. **Cap. 4 — Conclusões** ← escrever no fim, após Cap. 2 e 3 completos
    - [ ] Síntese
@@ -138,6 +139,17 @@ O fluxo decidido: avançar com o **Capítulo 2 antes de qualquer outro** — é 
 
 ### Transversais
 - [ ] Criar `CLAUDE.md` na raiz do projeto com contexto global (stack, decisões, estrutura) para que o Claude Code não precise de ser recontextualizado em cada sessão.
+
+### Pós-entrega — Melhorias ao Cowork
+- [ ] **Atualizar skill `task-handoff`**: adicionar Passo 3b com instruções de commit/push.
+  O ficheiro está em `.claude/skills/task-handoff/SKILL.md`.
+  Inserir entre o Passo 3 e o Passo 4 o seguinte bloco:
+
+  > **Passo 3b — Gerar instruções de commit e push**
+  > Após persistir os ficheiros, fornecer sempre os comandos git para fazer commit e push
+  > do estado atual como "save point" antes de mudar de contexto.
+  > Formato: `git add [ficheiros]` + `git commit -m "[tipo]: [resumo]"` + `git push`.
+  > Listar apenas ficheiros alterados nesta task; omitir `git push` se não houver remote.
 
 ### Fase 3 — Service.Vector
 - [ ] **Preparar prompts para o Claude Code** (fazer aqui no Cowork antes de abrir o Claude Code): contexto do projeto, ficheiros a reutilizar (`DvectorGrpcService.java`, `dvector.proto`), o que implementar (staging area por txId, operações XA), o que não fazer (sem MOM, sem Consul).
